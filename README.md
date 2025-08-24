@@ -10,4 +10,4 @@ How to play the audio:
 2. Alternative: Play through the speakers near the microphone (not ideal, but works for testing).
 
 What to look for:
-3. ρ(t) signal: positive on the ascending chirp, negative on the descending chirp, ~0 on stationary and beats.
+1. ρ(t) signal: positive on the ascending chirp, negative on the descending chirp, ~0 on stationary and beats.
