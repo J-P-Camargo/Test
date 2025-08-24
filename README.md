@@ -11,3 +11,9 @@ How to play the audio:
 
 What to look for:
 1. ρ(t) signal: positive on the ascending chirp, negative on the descending chirp, ~0 on stationary and beats.
+2. Note: The control is pure tone (fixed 3 kHz).
+The others are not pure tones, but chirps or beats.
+The difference lies in the signal definition:
+Pure tone → steady → spectrogram without slope → $\rho\approx0$.
+Chirp → frequency varies → spectrogram slopes → $\rho\neq0$.
+Beat → two close frequencies → spectrogram “breathes,” but does not slope → $\rho\approx0$ (noisy).
