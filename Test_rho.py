@@ -1,5 +1,5 @@
 # ========================
-# Test_rho
+# Test_rho.py
 # ========================
 
 import numpy as np
@@ -42,7 +42,6 @@ spec_hist = np.zeros((n_bins, SPEC_COLS), dtype=np.float32)
 # ========================
 # results buffer rho(t)
 # ========================
-
 rho_values = []
 time_axis = []
 
@@ -147,30 +146,23 @@ def process_block(block, n0, t_now):
 
     # ========================
     # ===== calculation of rho(t) =====
-    # ========================     
+    # ========================
     rho_vals = []
     for st in tracks.values():
-        if len(st['finst_hist']) >= 2:
-        # tempo em segundos (cada ponto = duração de um bloco)
-           dt = BLOCK / FS
-           tau = np.arange(len(st['finst_hist'])) * dt
-           omega = np.array(st['finst_hist'])
+        x = np.asarray(st['finst_hist'], dtype=float)
+        if x.size >= 3:  # mínimo para correlação estável
+            tau = np.arange(x.size, dtype=float)
+            x_ = x - x.mean()
+            t_ = tau - tau.mean()
+            denom = np.sqrt((x_**2).sum() * (t_**2).sum())
+            if denom > 0:
+                r = float((x_ * t_).sum() / denom)
+                rho_vals.append(r)
 
-        # covariância e variâncias consistentes (populacionais, ddof=0)
-           cov = np.cov(tau, omega, ddof=0)[0, 1]
-           var_tau = np.var(tau, ddof=0)
-           var_omega = np.var(omega, ddof=0)
-
-           if var_tau > 0 and var_omega > 0:
-               rho = cov / np.sqrt(var_tau * var_omega)
-               rho_vals.append(rho)
-
-# average of valid tracks at this time
     if rho_vals:
         rho_mean = np.mean(rho_vals)
         rho_values.append(rho_mean)
         time_axis.append(t_now)
-    
 
 def handle_timeouts(seen_update=False):
     remove_keys = []
@@ -203,8 +195,8 @@ def setup_figure():
     ax_radar = fig.add_subplot(gs[0, 0])
     radar_img = ax_radar.imshow(np.zeros((1, HIST_LEN)), aspect='auto', cmap='Greens',
                                 interpolation='nearest', vmin=0.0, vmax=1.0)
-    ax_radar.set_title("Radar de portadoras")
-    ax_radar.set_ylabel("Frequência (Hz)")
+    ax_radar.set_title("Carrier radar")
+    ax_radar.set_ylabel("Frequency (Hz)")
     ax_radar.set_xticks([])
 
     ax_spec = fig.add_subplot(gs[1, 0])
@@ -218,7 +210,8 @@ def setup_figure():
     line_rho, = ax_rho.plot([], [], lw=2, color='red')
     ax_rho.set_title("Tilt espectral ρ(t)")
     ax_rho.set_xlabel("Tempo (s)")
-    ax_rho.set_ylabel("ρ (t)")
+    ax_rho.set_ylabel(r'$\rho(t)$ (coefficient, dimensionless)')
+    ax_rho.set_ylim(-1.05, 1.05)   # eixo fixo para correlação
     ax_rho.grid(True)
 
     cbar = plt.colorbar(spec_img, cax=fig.add_subplot(gs[3, 0]), orientation='horizontal')
@@ -251,7 +244,6 @@ def update_visual(frame, ax_radar, radar_img, ax_spec, spec_img, ax_rho, line_rh
     if rho_values:
         line_rho.set_data(time_axis, rho_values)
         ax_rho.set_xlim(max(0, time_axis[0]), time_axis[-1])
-        ax_rho.set_ylim(np.min(rho_values) - 1, np.max(rho_values) + 1)
 
     return [radar_img, spec_img, line_rho]
 
@@ -259,7 +251,7 @@ def update_visual(frame, ax_radar, radar_img, ax_spec, spec_img, ax_rho, line_rh
 # Main loop
 # ========================
 def main():
-    print("Captura ao vivo iniciada — fale, toque tons ou sinais; observe radar, espectrograma e ρ(t).")
+    print("Live capture initiated — speak, play tones or signals; observe radar, spectrogram and ρ(t).")
     fig, ax_radar, radar_img, ax_spec, spec_img, ax_rho, line_rho = setup_figure()
 
     stream = sd.InputStream(channels=1, samplerate=FS, blocksize=BLOCK, dtype='float32', callback=audio_cb)
@@ -292,11 +284,11 @@ def main():
         stream.stop()
         stream.close()
         # salva resultados em CSV
-        with open("rho_results.csv", "w", newline="") as f: #insert the file path
+        with open("rho_results.csv", "w", newline="") as f: # enter the location where you want to save the file
             writer = csv.writer(f)
-            writer.writerow(["tempo_s", "rho_t"])
+            writer.writerow(["tempo_s", "rho"])
             writer.writerows(zip(time_axis, rho_values))
-        print("Resultados de ρ(t) salvos em rho_results.csv")
+        print("Results of ρ(t) saved in rho_results.csv")
 
 if __name__ == "__main__":
     main()
