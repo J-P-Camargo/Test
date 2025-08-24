@@ -218,7 +218,7 @@ def setup_figure():
     line_rho, = ax_rho.plot([], [], lw=2, color='red')
     ax_rho.set_title("Tilt espectral ρ(t)")
     ax_rho.set_xlabel("Tempo (s)")
-    ax_rho.set_ylabel("ρ (Hz)")
+    ax_rho.set_ylabel("ρ (t)")
     ax_rho.grid(True)
 
     cbar = plt.colorbar(spec_img, cax=fig.add_subplot(gs[3, 0]), orientation='horizontal')
@@ -294,7 +294,7 @@ def main():
         # salva resultados em CSV
         with open("rho_results.csv", "w", newline="") as f: #insert the file path
             writer = csv.writer(f)
-            writer.writerow(["tempo_s", "rho_Hz"])
+            writer.writerow(["tempo_s", "rho_t"])
             writer.writerows(zip(time_axis, rho_values))
         print("Resultados de ρ(t) salvos em rho_results.csv")
 
